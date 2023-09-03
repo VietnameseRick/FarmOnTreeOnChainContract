@@ -2,56 +2,137 @@ use array::ArrayTrait;
 use starknet::ContractAddress;
 
 #[derive(Component, Copy, Drop, Serde, SerdeLen)]
-struct Moves {
+struct Game {
     #[key]
     player: ContractAddress,
-    remaining: u8,
+    PlayerInfo: Option<playerInfo>,
+    AncientTree: Option<treeInfo>
 }
 
 #[derive(Component, Copy, Drop, Serde, SerdeLen)]
-struct Position {
+struct playerInfo {
     #[key]
     player: ContractAddress,
-    x: u32,
-    y: u32
+    budget: felt252,
+    inventory: InventoryInfo,
 }
 
-trait PositionTrait {
-    fn is_zero(self: Position) -> bool;
-    fn is_equal(self: Position, b: Position) -> bool;
+#[derive(Component, Copy, Drop, Serde, SerdeLen)]
+struct treeInfo {
+    #[key]
+    player: ContractAddress,
+    FirstFloor: Option<floorInfo>,
+    SecondFloor: Option<floorInfo>,
+    ThirdFloor: Option<floorInfo>,
+    FourthFloor: Option<floorInfo>,
+    FifthFloor: Option<floorInfo>,
 }
 
-impl PositionImpl of PositionTrait {
-    fn is_zero(self: Position) -> bool {
-        if self.x - self.y == 0 {
-            return true;
-        }
-        false
-    }
+#[derive(Component, Copy, Drop, Serde, SerdeLen)]
+struct floorInfo {
+    #[key]
+    player: ContractAddress,
+    unlocked: bool,
+    FirstPosition: Option<PositionInformation>,
+    SecondPosition: Option<PositionInformation>,
+    ThirdPosition: Option<PositionInformation>,
+    FourthPosition: Option<PositionInformation>,
+    FifthPosition: Option<PositionInformation>,
+}
 
-    fn is_equal(self: Position, b: Position) -> bool {
-        self.x == b.x && self.y == b.y
+#[derive(Component, Copy, Drop, Serde, SerdeLen)]
+struct PositionInformation {
+    #[key]
+    player: ContractAddress,
+    unlocked: bool,
+    Pot: Option<potType>,
+    Seed: Option<seedType>,
+    timestampToCollect: felt252
+}
+
+#[derive(Serde, Drop, Copy, PartialEq)]
+enum potType {
+    normal,
+    unnormal,
+    rare
+}
+
+#[derive(Component, Copy, Drop, Serde, SerdeLen)]
+struct potStruct {
+    #[key]
+    player: ContractAddress,
+    normalAmount: u256,
+    unnormalAmount: u256,
+    rareAmount: u256
+}
+
+#[derive(Serde, Drop, Copy, PartialEq)]
+enum seedType {
+    normal,
+    unnormal,
+    rare
+}
+
+#[derive(Component, Copy, Drop, Serde, SerdeLen)]
+struct seedStruct {
+    #[key]
+    player: ContractAddress,
+    normalAmount: u256,
+    unnormalAmount: u256,
+    rareAmount: u256
+}
+
+const MAX_POTS: felt252 = 100; 
+const MAX_SEEDS: felt252 = 100;
+
+#[derive(Component, Copy, Drop, Serde, SerdeLen)]
+struct InventoryInfo {
+    #[key]
+    player: ContractAddress,
+    Pots: potStruct, 
+    Seeds: seedStruct,        
+}
+
+impl playerInfoSerdeLen of dojo::SerdeLen<Option<playerInfo>> {
+    #[inline(always)]
+    fn len() -> usize {
+        7
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use debug::PrintTrait;
-    use super::{Position, PositionTrait};
-
-    #[test]
-    #[available_gas(100000)]
-    fn test_position_is_zero() {
-        let player = starknet::contract_address_const::<0x0>();
-        assert(PositionTrait::is_zero(Position { player, x: 0, y: 0 }), 'not zero');
-    }
-
-    #[test]
-    #[available_gas(100000)]
-    fn test_position_is_equal() {
-        let player = starknet::contract_address_const::<0x0>();
-        let position = Position { player, x: 420, y: 0 };
-        position.print();
-        assert(PositionTrait::is_equal(position, Position { player, x: 420, y: 0 }), 'not equal');
+impl floorInfoSerdeLen of dojo::SerdeLen<Option<floorInfo>> {
+    #[inline(always)]
+    fn len() -> usize {
+        42
     }
 }
+
+impl treeInfoSerdeLen of dojo::SerdeLen<Option<treeInfo>> {
+    #[inline(always)]
+    fn len() -> usize {
+        216
+    }
+}
+
+impl PositionInformationSerdeLen of dojo::SerdeLen<Option<PositionInformation>> {
+    #[inline(always)]
+    fn len() -> usize {
+        7
+    }
+}
+
+impl potTypeSerdeLen of dojo::SerdeLen<Option<potType>> {
+    #[inline(always)]
+    fn len() -> usize {
+        1
+    }
+}
+
+impl seedTypeSerdeLen of dojo::SerdeLen<Option<seedType>> {
+    #[inline(always)]
+    fn len() -> usize {
+        1
+    }
+}
+
+
